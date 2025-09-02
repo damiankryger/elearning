@@ -1,0 +1,13 @@
+# Courses context controllers
+courses_controllers:
+    resource:
+        path: ../src/Courses/Application/Controllers/
+        namespace: App\Courses\Application\Controllers
+    type: attribute
+
+# Users context controllers
+users_controllers:
+    resource:
+        path: ../src/Users/Application/Controllers/
+        namespace: App\Users\Application\Controllers
+    type: attribute

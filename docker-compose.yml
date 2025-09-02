@@ -1,0 +1,75 @@
+services:
+  # PHP-FPM 8.4
+  php-fpm:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: elearning_php_fpm
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini
+    environment:
+      - PHP_FPM_USER=www-data
+      - PHP_FPM_GROUP=www-data
+    depends_on:
+      - database
+    networks:
+      - elearning_network
+
+  # Nginx
+  nginx:
+    image: nginx:alpine
+    container_name: elearning_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php-fpm
+    networks:
+      - elearning_network
+
+  # PostgreSQL Database
+  database:
+    image: postgres:16-alpine
+    container_name: elearning_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-elearning}
+      POSTGRES_USER: ${POSTGRES_USER:-elearning_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-elearning_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-elearning_user} -d ${POSTGRES_DB:-elearning}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - elearning_network
+
+  # Adminer
+  adminer:
+    image: adminer:latest
+    container_name: elearning_adminer
+    ports:
+      - "8081:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: database
+      ADMINER_DESIGN: pepa-linha-dark
+    depends_on:
+      - database
+    networks:
+      - elearning_network
+
+networks:
+  elearning_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
